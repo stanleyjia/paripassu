@@ -16,6 +16,9 @@ let landmarkCount = 0
 
 let gameState = {
 	points: 0,
+	timer: 5,
+	started: false,
+	finished: false,
 	captured: [],
 	messages: []
 }
@@ -45,9 +48,9 @@ let map = new InteractiveMap({
 		// You can also use this to create trails or clusters for the user to find
 		for (var i = 0; i < 10; i++) {
 
-			// make a polar offset (radius, theta) 
+			// make a polar offset (radius, theta)
 			// from the map's center (units are *approximately* meters)
-			let position = clonePolarOffset(NU_CENTER, 400*Math.random() + 300, 20*Math.random())
+			let position = clonePolarOffset(NU_CENTER, 400 * Math.random() + 300, 20 * Math.random())
 			this.createLandmark({
 				pos: position,
 				name: words.getRandomWord(),
@@ -67,16 +70,16 @@ let map = new InteractiveMap({
 			console.log(landmark.openMapData)
 			landmark.name = landmark.openMapData.name
 		}
-		
+
 		// *You* decide how to create a marker
 		// These aren't used, but could be examples
 		landmark.idNumber = landmarkCount++
 		landmark.color = [Math.random(), 1, .5]
 
 		// Give it a random number of points
-		landmark.points = Math.floor(Math.random()*10 + 1)
+		landmark.points = Math.floor(Math.random() * 10 + 1)
 		return landmark
-	}, 
+	},
 
 	onEnterRange: (landmark, newLevel, oldLevel, dist) => {
 		// What happens when the user enters a range
@@ -87,8 +90,6 @@ let map = new InteractiveMap({
 
 			// Add points to my gamestate
 			gameState.points += landmark.points
-
-			
 
 			// Have we captured this?
 			if (!gameState.captured.includes(landmark.name)) {
@@ -101,13 +102,12 @@ let map = new InteractiveMap({
 	},
 
 	onExitRange: (landmark, newLevel, oldLevel, dist) => {
-		// What happens when the user EXITS a range around a landmark 
+		// What happens when the user EXITS a range around a landmark
 		// e.g. (2->1, 0->-1)
-		
 		console.log("exit", landmark.name, newLevel)
 	},
-	
-	
+
+
 	featureToStyle: (landmark) => {
 		// How should we draw this landmark?
 		// Returns an object used to set up the drawing
@@ -118,15 +118,17 @@ let map = new InteractiveMap({
 				noBG: true // skip the background
 			}
 		}
-		
+
 		// Pick out a hue, we can reuse it for foreground and background
-		let hue = landmark.points*.1
+		let hue = landmark.points * .1
 		return {
-			label: landmark.name + "\n" + landmark.distanceToPlayer +"m",
+			label: landmark.name + "\n" + landmark.distanceToPlayer + "m",
 			fontSize: 8,
 
 			// Icons (in icon folder)
-			icon: "person_pin_circle",
+			// icon: "person_pin_circle",
+			icon: "local_cafe",
+
 
 			// Colors are in HSL (hue, saturation, lightness)
 			iconColor: [hue, 1, .5],
@@ -135,7 +137,7 @@ let map = new InteractiveMap({
 		}
 	},
 
-	
+
 })
 
 
@@ -150,27 +152,53 @@ window.onload = (event) => {
 			<div id="main-columns">
 
 				<div class="main-column" style="flex:1;overflow:scroll;max-height:200px">
-					(TODO, add your own gamestate)
-					{{gameState}}
-					
+					<div v-if="!gameState.finished" style="display:flex;flex-direction:column">
+						<p>Score: {{gameState.points}}</p>
+						<p>Timer (seconds left): {{gameState.timer}} </p>
+						<p>Started: {{gameState.started}} </p>
+						<button v-if="!gameState.started" @click="timerCount">Start Timer</button>
+					</div>
+					<div v-if="gameState.finished" style="display:flex;flex-direction:column">
+						<p>Congratulations! You finished with</p>
+						<h2> {{gameState.points}}</h2>
+						<p>points!</p>
+
+					</div>
 				</div>
 
 				<div class="main-column" style="overflow:hidden;width:${MAP_SIZE}px;height:${MAP_SIZE}px">
 					<location-widget :map="map" />
-				
+
 				</div>
 
-			</div>	
+			</div>
 		<footer></footer>
 		</div>`,
 
 		data() {
 			return {
-			
 				map: map,
 				gameState: gameState
 			}
 		},
+		methods: {
+			timerCount: function (event) {
+				console.log(gameState.started)
+				if (!gameState.started) {
+					if (gameState.timer > 0) {
+						gameState.started = true
+						setInterval(() => {
+							gameState.timer--;
+							if (gameState.timer == 0) {
+								gameState.started = false
+								gameState.finished = true
+							}
+						}, 1000);
+					}
+				}
+			}
+		},
+
 
 		// Get all of the intarsia components, plus various others
 		components: Object.assign({
@@ -183,4 +211,3 @@ window.onload = (event) => {
 	})
 
 };
-
