@@ -16,7 +16,7 @@ let landmarkCount = 0
 
 let gameState = {
 	points: 0,
-	timer: 5,
+	timer: 3600,
 	started: false,
 	finished: false,
 	captured: [],
